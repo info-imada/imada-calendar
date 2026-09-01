@@ -10,7 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useRouter } from "next/navigation";
 import type { WorkLogWorkspaceModel } from "@/features/work-logs/work-log-types";
 import { isStartResetAllowed } from "@/lib/work-logs/time";
 import { WorkLogAttachments } from "@/features/work-logs/work-log-attachments";
@@ -29,17 +31,19 @@ export function WorkLogForm({ workspace, initialActivityId }: { workspace: WorkL
   const [attachmentIds, setAttachmentIds] = useState(active?.attachments.map((attachment) => attachment.id) ?? []);
   const [finishOpen, setFinishOpen] = useState(false);
   const [pending, startTransition] = useTransition();
+  const router = useRouter();
   const selectedCustomer = workspace.customers.find((customer) => customer.id === customerId);
   const selectedScope = workspace.scopes.find((item) => `${item.country.id}:${item.team?.id ?? "country"}` === scope);
   const canReset = Boolean(active && active.status === "IN_PROGRESS" && !active.startResetUsedAt && isStartResetAllowed(active.startedAt));
   const completionReady = Boolean(active && customerId && machineReference.trim() && description.trim() && (customerLocationId || location.trim()));
+  const canEditFields = Boolean(active && active.status !== "COMPLETED");
   const currentStatus = active?.status;
   const scopeOptions = useMemo(() => workspace.scopes.map((item) => ({ ...item, key: `${item.country.id}:${item.team?.id ?? "country"}` })), [workspace.scopes]);
 
   function run(action: () => Promise<{ success: boolean; errorCode?: string }>, successMessage: string) {
     startTransition(async () => {
       const result = await action();
-      if (result.success) { toast.success(successMessage); window.location.reload(); }
+      if (result.success) { toast.success(successMessage); router.refresh(); }
       else toast.error(result.errorCode === "FORBIDDEN" ? "No tienes permisos para esta operación." : result.errorCode === "CONFLICT" ? "El registro cambió o ya fue procesado." : "Revisa los datos e inténtalo nuevamente.");
     });
   }
@@ -62,12 +66,12 @@ export function WorkLogForm({ workspace, initialActivityId }: { workspace: WorkL
 
   return <div className="min-w-0 space-y-4">
     <FormSection description="La hora se toma siempre del servidor y se muestra en tu zona horaria capturada." title="Jornada">
-      {active ? <div className="flex min-w-0 flex-wrap items-center gap-2"><Badge variant={currentStatus === "COMPLETED" ? "secondary" : "default"}>{currentStatus ? statusLabels[currentStatus] : "Jornada"}</Badge><span className="text-sm text-muted-foreground">{active.timezone}</span>{canReset ? <Button disabled={pending} onClick={() => run(() => resetWorkLogStart({ workLogId: active.id }), "Hora de inicio reiniciada")} size="sm" variant="outline"><RotateCcwIcon /> Reiniciar inicio</Button> : null}</div> : <div className="grid min-w-0 gap-3 sm:grid-cols-2"><div className="space-y-2"><Label htmlFor="work-log-scope">País o equipo permitido</Label><select aria-label="País o equipo permitido" className="flex min-h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3 text-sm" disabled={pending || !scopeOptions.length} id="work-log-scope" onChange={(event) => setScope(event.target.value)} value={scope}><option value="">Selecciona un alcance</option>{scopeOptions.map((item) => <option key={item.key} value={item.key}>{item.country.name}{item.team ? ` · ${item.team.name}` : " · Todos los equipos"}</option>)}</select></div><div className="space-y-2"><Label htmlFor="work-log-activity">Actividad (opcional)</Label><select aria-label="Actividad opcional" className="flex min-h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3 text-sm" disabled={pending} id="work-log-activity" onChange={(event) => setActivityId(event.target.value)} value={activityId}><option value="">Trabajo no planificado</option>{workspace.activities.map((activity) => <option key={activity.id} value={activity.id}>{activity.title}</option>)}</select></div></div>}
+      {active ? <div className="flex min-w-0 flex-wrap items-center gap-2"><Badge variant={currentStatus === "COMPLETED" ? "secondary" : "default"}>{currentStatus ? statusLabels[currentStatus] : "Jornada"}</Badge><span className="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">Zona: {active.timezone}</span>{canReset ? <Button disabled={pending} onClick={() => run(() => resetWorkLogStart({ workLogId: active.id }), "Hora de inicio reiniciada")} size="sm" variant="outline"><RotateCcwIcon /> Reiniciar inicio</Button> : null}</div> : <div className="grid min-w-0 gap-3 sm:grid-cols-2"><div className="min-w-0 space-y-2"><Label htmlFor="work-log-scope">País o equipo permitido</Label><Select disabled={pending || !scopeOptions.length} onValueChange={(value) => setScope(value ?? "")} value={scope}><SelectTrigger aria-label="País o equipo permitido" className="w-full" id="work-log-scope"><SelectValue placeholder="Selecciona un alcance" /></SelectTrigger><SelectContent>{scopeOptions.map((item) => <SelectItem key={item.key} value={item.key}>{item.country.name}{item.team ? ` · ${item.team.name}` : " · Todos los equipos"}</SelectItem>)}</SelectContent></Select></div><div className="min-w-0 space-y-2"><Label htmlFor="work-log-activity">Actividad (opcional)</Label><Select disabled={pending} onValueChange={(value) => setActivityId(value ?? "")} value={activityId}><SelectTrigger aria-label="Actividad opcional" className="w-full" id="work-log-activity"><SelectValue placeholder="Trabajo no planificado" /></SelectTrigger><SelectContent><SelectItem value="">Trabajo no planificado</SelectItem>{workspace.activities.map((activity) => <SelectItem key={activity.id} value={activity.id}>{activity.title}</SelectItem>)}</SelectContent></Select></div></div>}
       {!active ? <Button className="w-full sm:w-auto" disabled={pending || !workspace.capabilities.canCreate} onClick={begin}><PlayCircleIcon /> Marcar hora de inicio</Button> : null}
     </FormSection>
-    <fieldset className="min-w-0 space-y-4" disabled={pending || !active || active.status !== "IN_PROGRESS"}>
-      <FormSection description="Selecciona un cliente activo y una ubicación real cuando estén disponibles." title="Cliente y ubicación">
-        <div className="grid min-w-0 gap-3 sm:grid-cols-2"><div className="space-y-2"><Label htmlFor="work-log-customer">Cliente</Label><select className="flex min-h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3 text-sm" id="work-log-customer" onChange={(event) => { setCustomerId(event.target.value); setCustomerLocationId(""); }} value={customerId}><option value="">Selecciona un cliente</option>{workspace.customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.name}</option>)}</select></div><div className="space-y-2"><Label htmlFor="work-log-location">Ubicación</Label><select className="flex min-h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3 text-sm" id="work-log-location" onChange={(event) => setCustomerLocationId(event.target.value)} value={customerLocationId}><option value="">Selecciona una ubicación</option>{selectedCustomer?.locations.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div></div>
+    <fieldset className="min-w-0 space-y-4" disabled={pending || !canEditFields}>
+      <FormSection description="Selecciona primero un cliente para mostrar sus ubicaciones activas." title="Cliente y ubicación">
+        <div className="grid min-w-0 gap-3 sm:grid-cols-2"><div className="min-w-0 space-y-2"><Label htmlFor="work-log-customer">Cliente</Label><Select onValueChange={(value) => { setCustomerId(value ?? ""); setCustomerLocationId(""); }} value={customerId}><SelectTrigger className="w-full" id="work-log-customer"><SelectValue placeholder="Selecciona un cliente" /></SelectTrigger><SelectContent>{workspace.customers.map((customer) => <SelectItem key={customer.id} value={customer.id}>{customer.name}</SelectItem>)}</SelectContent></Select></div><div className="min-w-0 space-y-2"><Label htmlFor="work-log-location">Ubicación</Label><Select disabled={!selectedCustomer?.locations.length} onValueChange={(value) => setCustomerLocationId(value ?? "")} value={customerLocationId}><SelectTrigger className="w-full" id="work-log-location"><SelectValue placeholder={selectedCustomer ? "Selecciona una ubicación" : "Selecciona primero un cliente"} /></SelectTrigger><SelectContent>{selectedCustomer?.locations.map((item) => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}</SelectContent></Select></div></div>
         <div className="space-y-2"><Label htmlFor="work-log-manual-location">Ubicación manual <span className="font-normal text-muted-foreground">(si no está en catálogo)</span></Label><Input id="work-log-manual-location" onChange={(event) => setLocation(event.target.value)} placeholder="Ej. Bodega norte" value={location} /></div>
       </FormSection>
       <FormSection title="Modelo o número de serie"><Input aria-label="Modelo o número de serie" id="work-log-reference" onChange={(event) => setMachineReference(event.target.value)} placeholder="Ej. IMADA-12345" value={machineReference} /></FormSection>
