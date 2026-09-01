@@ -4,7 +4,7 @@
 
 - Node.js compatible con Next.js 16 y Prisma 7. El repositorio no fija una versión en `.nvmrc` ni `package.json`.
 - pnpm, porque `pnpm-lock.yaml` es el lockfile versionado y `package.json` declara `packageManager`.
-- PostgreSQL accesible mediante las URLs de entorno.
+- MySQL/MariaDB accesible mediante las URLs de entorno.
 - Git.
 
 En Windows, ejecuta los comandos desde PowerShell en la raíz del proyecto. Todo trabajo solicitado por el propietario de este repositorio se realiza directamente en `master`; no crees worktrees aislados.
@@ -25,7 +25,7 @@ Copia `.env.example` a `.env` y proporciona valores locales seguros. Las variabl
 
 | Variable | Uso |
 | --- | --- |
-| `DATABASE_URL` | Conexión PostgreSQL usada por la aplicación/Prisma. |
+| `DATABASE_URL` | Conexión MySQL/MariaDB usada por la aplicación/Prisma. |
 | `DIRECT_DATABASE_URL` | Conexión directa para tareas que la requieran. |
 | `NEXTAUTH_URL` | URL base de NextAuth. |
 | `NEXTAUTH_SECRET` | Firma/cifrado de sesión. |
@@ -154,7 +154,7 @@ No declares “pasa” basándote en una ejecución anterior. Reporta comando, m
 
 ## Docker y Dokploy
 
-El despliegue de producción usa el `Dockerfile` raíz y PostgreSQL administrado por Dokploy. Configuración canónica de Dokploy:
+El despliegue de producción usa el `Dockerfile` raíz y la base MySQL/MariaDB de Control Horario IMADA. Configuración canónica de Dokploy:
 
 ```text
 Branch: master
@@ -222,4 +222,4 @@ Consulta `docs/deployment/dokploy.md` antes del primer deploy, cambio de dominio
 
 ## Registro de tarea
 
-Variables opcionales requeridas para adjuntos: `R2_ENDPOINT`, `R2_BUCKET`, `R2_REGION`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` y `R2_PRESIGN_EXPIRES_SECONDS`. El importador se ejecuta con `pnpm controlhorario:import --dry-run` o `pnpm controlhorario:import --apply`; el dry-run no abre ni modifica PostgreSQL. No se deben almacenar claves R2, binarios grandes ni credenciales en PostgreSQL.
+Variables opcionales requeridas para adjuntos: `R2_ENDPOINT`, `R2_BUCKET`, `R2_REGION`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` y `R2_PRESIGN_EXPIRES_SECONDS`. El importador se ejecuta con `pnpm controlhorario:import --dry-run` o `pnpm controlhorario:import --apply`; el dry-run no abre ni modifica MySQL. No se deben almacenar claves R2, binarios grandes ni credenciales en MySQL.

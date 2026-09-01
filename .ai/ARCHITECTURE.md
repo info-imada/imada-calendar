@@ -12,8 +12,8 @@
 | Calendario | React Big Calendar |
 | Tablas | TanStack React Table donde aplica |
 | Autenticación | NextAuth 4, Zoho OAuth y Credentials Provider |
-| Persistencia | Prisma 7, PostgreSQL y `@prisma/adapter-pg` |
-| Base alojada | PostgreSQL administrado por Dokploy según `docs/database/dokploy-postgres.md` |
+| Persistencia | Prisma 7, MySQL/MariaDB y `@prisma/adapter-mariadb` |
+| Base alojada | MySQL legacy de Control Horario IMADA; Calendar crea tablas con prefijo `calendar_` |
 | Feedback | Sonner, Alert, Skeleton y estados compartidos |
 | Pruebas | Vitest, Testing Library y jsdom |
 
@@ -107,7 +107,7 @@ Server Action
   ↓ Zod → autorización → transacción → AuditLog
 Prisma Client + PrismaPg
   ↓
-PostgreSQL de Dokploy
+MySQL/MariaDB de Control Horario IMADA
 ```
 
 ## Autenticación y protección de rutas
@@ -171,9 +171,9 @@ Next.js en 0.0.0.0:3000
 Dominio público
 ```
 
-PostgreSQL se ejecuta como servicio administrado en Dokploy: `DATABASE_URL` y `DIRECT_DATABASE_URL` apuntan a la URL interna del servicio de base de datos. La imagen no contiene base, volumen persistente ni secretos.
+La base MySQL de Control Horario IMADA se configura mediante `DATABASE_URL` y `DIRECT_DATABASE_URL`. La imagen no contiene base, volumen persistente ni secretos.
 
-`GET /api/health` valida Next.js y conectividad con PostgreSQL. El contenedor ejecuta una única réplica inicialmente; antes de escalar deben separarse las migraciones y coordinarse caché/Server Actions. Consulta `docs/deployment/dokploy.md`.
+`GET /api/health` valida Next.js y conectividad con MySQL. El contenedor ejecuta una única réplica inicialmente; antes de escalar deben separarse las migraciones y coordinarse caché/Server Actions. Consulta `docs/deployment/dokploy.md`.
 
 ## Archivos que debes leer
 

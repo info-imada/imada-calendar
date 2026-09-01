@@ -85,7 +85,7 @@ Mutaciones usan Server Actions + Zod + autorización + Prisma + AuditLog
 - **Autorización:** roles persistidos, permisos, scopes y overrides.
 - **Auditoría:** `AuditLog` append-only; hay una pestaña de auditoría en el detalle de actividad.
 - **Diseño:** tokens neutros, marca `#34B27B`, temas claro/oscuro y componentes ShadCN/Base UI.
-- **Persistencia:** PostgreSQL de Dokploy mediante Prisma y `@prisma/adapter-pg`.
+- **Persistencia:** MySQL/MariaDB de Control Horario IMADA mediante Prisma y `@prisma/adapter-mariadb`; las tablas nuevas de Calendar usan el prefijo `calendar_`.
 
 ## Límites confirmados del producto actual
 

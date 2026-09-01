@@ -1,6 +1,6 @@
 # Despliegue de Calendar en Dokploy
 
-Esta guía configura Calendar como una **Application** de Dokploy construida desde el `Dockerfile` del repositorio. PostgreSQL se ejecuta como servicio administrado en Dokploy; la aplicación Next.js se conecta a la base por la red interna de Dokploy.
+Esta guía configura Calendar como una **Application** de Dokploy construida desde el `Dockerfile` del repositorio. Calendar utiliza la base MySQL/MariaDB legacy de Control Horario IMADA.
 
 Referencias oficiales:
 
@@ -13,20 +13,20 @@ Referencias oficiales:
 
 - Repositorio accesible desde la cuenta GitHub conectada a Dokploy.
 - Rama `master` actualizada.
-- Base PostgreSQL creada en Dokploy.
+- Base MySQL/MariaDB de Control Horario IMADA accesible desde el entorno de ejecución.
 - Dominio con un registro DNS apuntando al servidor de Dokploy.
 - Aplicación OAuth en Zoho si se habilitará el acceso corporativo.
 
 No copies `.env` al repositorio. Todos los valores se configuran en la pestaña **Environment** de Dokploy.
 
-## 2. Preparar PostgreSQL en Dokploy
+## 2. Preparar la conexión MySQL
 
-En el servicio PostgreSQL de Dokploy, usa la sección **Internal Credentials**:
+En el proveedor de la base MySQL, usa las credenciales externas proporcionadas por el administrador:
 
-- `DATABASE_URL`: conexión interna del servicio PostgreSQL de Dokploy, usada por Next.js en runtime.
-- `DIRECT_DATABASE_URL`: la misma conexión interna del servicio PostgreSQL de Dokploy, usada por `prisma migrate deploy`.
+- `DATABASE_URL`: URL `mysql://usuario:contraseña@host:3306/base`, usada por Next.js en runtime.
+- `DIRECT_DATABASE_URL`: la misma URL, usada por `prisma migrate deploy`.
 
-Para producción dentro de Dokploy usa la URL interna, no la externa. No publiques ni versiones la URL real.
+La aplicación debe poder resolver el host MySQL desde Vercel/Dokploy y el proveedor debe permitir conexiones remotas desde el origen de ejecución. No publiques ni versiones la URL real.
 
 El contenedor ejecuta las migraciones automáticamente antes de iniciar Next.js. No ejecuta `prisma db push` ni el seed. Las migraciones incluyen el bootstrap mínimo de catálogos para bases nuevas.
 
@@ -117,10 +117,10 @@ La imagen incluye un Docker `HEALTHCHECK` que consulta:
 GET /api/health
 ```
 
-La ruta comprueba una consulta mínima contra PostgreSQL:
+La ruta comprueba una consulta mínima contra MySQL:
 
-- `200 { "status": "ok" }`: Next.js y PostgreSQL disponibles.
-- `503 { "status": "unavailable" }`: PostgreSQL o la configuración no están disponibles.
+- `200 { "status": "ok" }`: Next.js y MySQL disponibles.
+- `503 { "status": "unavailable" }`: MySQL o la configuración no están disponibles.
 
 No devuelve URLs, credenciales ni mensajes internos. Si la versión de Dokploy permite healthchecks adicionales en **Advanced**, usa:
 

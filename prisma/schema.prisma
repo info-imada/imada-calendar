@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
 }
 
 enum ScopeType {
@@ -90,6 +90,8 @@ model User {
   workLogAttachments         WorkLogAttachment[]
   createdAt                  DateTime                 @default(now())
   updatedAt                  DateTime                 @updatedAt
+
+  @@map("calendar_users")
 }
 
 model UserCredential {
@@ -100,6 +102,8 @@ model UserCredential {
   changedAt          DateTime?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
+
+  @@map("calendar_user_credentials")
 }
 
 model LoginAttempt {
@@ -109,6 +113,7 @@ model LoginAttempt {
   succeeded   Boolean
 
   @@index([email, attemptedAt])
+  @@map("calendar_login_attempts")
 }
 
 model Account {
@@ -126,6 +131,7 @@ model Account {
   user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([provider, providerAccountId])
+  @@map("calendar_accounts")
 }
 
 model Session {
@@ -135,6 +141,7 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([sessionToken])
+  @@map("calendar_sessions")
 }
 
 model VerificationToken {
@@ -143,6 +150,7 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+  @@map("calendar_verification_tokens")
 }
 
 model Country {
@@ -154,6 +162,8 @@ model Country {
   activities          Activity[]
   workLogs            WorkLog[]
   permissionOverrides UserPermissionOverride[]
+
+  @@map("calendar_countries")
 }
 
 model Team {
@@ -167,6 +177,7 @@ model Team {
   permissionOverrides UserPermissionOverride[]
 
   @@unique([countryId, name])
+  @@map("calendar_teams")
 }
 
 model Customer {
@@ -184,6 +195,7 @@ model Customer {
 
   @@index([isActive, name])
   @@unique([legacySource, legacyId])
+  @@map("calendar_customers")
 }
 
 model CustomerLocation {
@@ -202,6 +214,7 @@ model CustomerLocation {
   @@unique([customerId, name])
   @@unique([legacySource, legacyId])
   @@index([customerId, isActive, name])
+  @@map("calendar_customer_locations")
 }
 
 model Role {
@@ -213,6 +226,8 @@ model Role {
   priority    Int                  @unique
   permissions RolePermission[]
   assignments UserRoleAssignment[]
+
+  @@map("calendar_roles")
 }
 
 model Permission {
@@ -222,6 +237,8 @@ model Permission {
   category  String
   roles     RolePermission[]
   overrides UserPermissionOverride[]
+
+  @@map("calendar_permissions")
 }
 
 model RolePermission {
@@ -232,6 +249,7 @@ model RolePermission {
   permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
   @@unique([roleId, permissionId])
+  @@map("calendar_role_permissions")
 }
 
 model UserPermissionOverride {
@@ -252,6 +270,7 @@ model UserPermissionOverride {
 
   @@unique([userId, permissionId, scopeKey])
   @@index([userId, countryId, teamId])
+  @@map("calendar_user_permission_overrides")
 }
 
 model UserRoleAssignment {
@@ -271,6 +290,7 @@ model UserRoleAssignment {
 
   @@unique([userId, roleId, scopeKey])
   @@index([userId, countryId, teamId])
+  @@map("calendar_user_role_assignments")
 }
 
 model ActivityType {
@@ -281,6 +301,8 @@ model ActivityType {
   sortOrder  Int        @default(0)
   isActive   Boolean    @default(true)
   activities Activity[]
+
+  @@map("calendar_activity_types")
 }
 
 model ActivityStatus {
@@ -291,6 +313,8 @@ model ActivityStatus {
   sortOrder  Int        @default(0)
   isActive   Boolean    @default(true)
   activities Activity[]
+
+  @@map("calendar_activity_statuses")
 }
 
 model Priority {
@@ -302,6 +326,8 @@ model Priority {
   sortOrder  Int        @default(0)
   isActive   Boolean    @default(true)
   activities Activity[]
+
+  @@map("calendar_priorities")
 }
 
 model Activity {
@@ -342,6 +368,7 @@ model Activity {
   @@index([assignedToId, startsAt])
   @@index([customerId, startsAt])
   @@index([statusId, startsAt])
+  @@map("calendar_activities")
 }
 
 model WorkLog {
@@ -384,6 +411,7 @@ model WorkLog {
   @@index([customerId, workDate])
   @@index([status, workDate])
   @@index([machineReference])
+  @@map("calendar_work_logs")
 }
 
 model WorkLogAttachment {
@@ -405,12 +433,15 @@ model WorkLogAttachment {
 
   @@unique([legacySource, legacyId])
   @@index([userId, workLogId])
+  @@map("calendar_work_log_attachments")
 }
 
 model ActivitySeries {
   id             String          @id @default(cuid())
   recurrenceRule RecurrenceRule?
   activities     Activity[]
+
+  @@map("calendar_activity_series")
 }
 
 model RecurrenceRule {
@@ -419,9 +450,11 @@ model RecurrenceRule {
   series     ActivitySeries      @relation(fields: [seriesId], references: [id], onDelete: Cascade)
   frequency  RecurrenceFrequency
   interval   Int                 @default(1)
-  daysOfWeek Int[]
+  daysOfWeek Json
   endsAt     DateTime?
   timezone   String
+
+  @@map("calendar_recurrence_rules")
 }
 
 model ActivityComment {
@@ -433,6 +466,8 @@ model ActivityComment {
   body       String   @db.Text
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
+  @@map("calendar_activity_comments")
 }
 
 model ActivityReminder {
@@ -445,6 +480,7 @@ model ActivityReminder {
 
   @@unique([activityId, channel, scheduledAt])
   @@index([scheduledAt, sentAt])
+  @@map("calendar_activity_reminders")
 }
 
 model Availability {
@@ -457,6 +493,7 @@ model Availability {
   createdAt DateTime @default(now())
 
   @@index([userId, startsAt])
+  @@map("calendar_availability")
 }
 
 model Notification {
@@ -469,6 +506,7 @@ model Notification {
   createdAt DateTime  @default(now())
 
   @@index([userId, readAt, createdAt])
+  @@map("calendar_notifications")
 }
 
 model EmailNotification {
@@ -478,8 +516,8 @@ model EmailNotification {
   entityId       String
   payload        Json
   dedupeKey      String              @unique
-  toRecipients   String[]
-  ccRecipients   String[]
+  toRecipients   Json
+  ccRecipients   Json
   status         EmailDeliveryStatus @default(PENDING)
   attemptCount   Int                 @default(0)
   nextAttemptAt  DateTime            @default(now())
@@ -492,6 +530,7 @@ model EmailNotification {
 
   @@index([status, nextAttemptAt, lockedAt])
   @@index([entityType, entityId, createdAt])
+  @@map("calendar_email_notifications")
 }
 
 model AuditLog {
@@ -504,4 +543,5 @@ model AuditLog {
   createdAt  DateTime @default(now())
 
   @@index([entityType, entityId, createdAt])
+  @@map("calendar_audit_logs")
 }

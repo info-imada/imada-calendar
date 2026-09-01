@@ -116,7 +116,7 @@ Consulta [`PERMISSIONS.md`](PERMISSIONS.md) para el algoritmo y la matriz seed.
 ## Auditoría
 
 - `AuditLog` registra actor opcional, entidad, ID, acción, metadata y fecha.
-- La migración inicial instala un trigger PostgreSQL que rechaza UPDATE y DELETE de AuditLog.
+- La migración MySQL debe preservar la inmutabilidad de `AuditLog`; las tablas de Calendar se crean con prefijo `calendar_`.
 - Mutaciones de actividades, países, equipos, usuarios, roles, permisos, overrides, credenciales y asignaciones escriben eventos según sus Server Actions.
 - La auditoría de una actividad solo se entrega si el actor tiene `audit:read` en ese recurso.
 

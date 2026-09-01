@@ -2,7 +2,7 @@
 
 ## Tecnología y conexión
 
-Calendar usa **PostgreSQL** mediante **Prisma 7** y `@prisma/adapter-pg`. `src/lib/prisma.ts` crea un `pg.Pool` y reutiliza el cliente en desarrollo. `docs/database/dokploy-postgres.md` identifica PostgreSQL de Dokploy como base de producción.
+Calendar usa **MySQL/MariaDB** mediante **Prisma 7** y `@prisma/adapter-mariadb`. `src/lib/prisma.ts` crea el adaptador con la URL de conexión y reutiliza el cliente en desarrollo. Las tablas de Calendar usan el prefijo `calendar_` para coexistir con las tablas legacy de Control Horario IMADA.
 
 Las URLs no viven en `schema.prisma`. `prisma.config.ts` selecciona:
 
@@ -188,7 +188,7 @@ pnpm db:seed
 ## Pendiente por confirmar
 
 - Estrategia aprobada de backup/restore y ventanas de migración.
-- Privilegios efectivos del rol PostgreSQL de runtime sobre AuditLog.
+- Privilegios efectivos del usuario MySQL de runtime sobre las tablas `calendar_*`.
 - Política para ejecutar seed en entornos compartidos.
 
 ## Registro de tarea

@@ -33,7 +33,7 @@ export async function runControlHorarioImport({ mode, source, prisma }: ImportOp
       if (!country) { report.unmapped.push(`scope:${scopeKey(scope.countryCode, scope.teamName)}`); continue; }
       let teamId: string | null = null;
       if (scope.teamName) {
-        const team = await transaction.team.findFirst({ where: { countryId: country.id, name: { equals: scope.teamName, mode: "insensitive" } }, select: { id: true } });
+        const team = await transaction.team.findFirst({ where: { countryId: country.id, name: { equals: scope.teamName } }, select: { id: true } });
         if (!team) { report.unmapped.push(`scope:${scopeKey(scope.countryCode, scope.teamName)}`); continue; }
         teamId = team.id;
       }

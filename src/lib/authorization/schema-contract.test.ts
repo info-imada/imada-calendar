@@ -31,7 +31,7 @@ describe("dynamic authorization Prisma contract", () => {
       /model EmailNotification \{[\s\S]*dedupeKey\s+String\s+@unique/,
     );
     expect(schema).toMatch(
-      /model EmailNotification \{[\s\S]*toRecipients\s+String\[\][\s\S]*ccRecipients\s+String\[\]/,
+      /model EmailNotification \{[\s\S]*toRecipients\s+Json[\s\S]*ccRecipients\s+Json/,
     );
     expect(schema).toMatch(
       /model EmailNotification \{[\s\S]*@@index\(\[status, nextAttemptAt, lockedAt\]\)/,

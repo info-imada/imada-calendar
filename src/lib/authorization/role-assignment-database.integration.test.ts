@@ -1,25 +1,21 @@
 import "dotenv/config";
 
-import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "@prisma/client";
 import { afterAll, describe, expect, it } from "vitest";
-import { Pool } from "pg";
 
 const databaseDescribe =
   process.env.RUN_DATABASE_INTEGRATION_TESTS === "1"
     ? describe
     : describe.skip;
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  max: 2,
+const prisma = new PrismaClient({
+  adapter: new PrismaMariaDb(process.env.DATABASE_URL ?? "mysql://placeholder:placeholder@localhost:3306/placeholder"),
 });
-const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
 databaseDescribe("role assignment database concurrency", () => {
   afterAll(async () => {
     await prisma.$disconnect();
-    await pool.end();
   });
 
   it("keeps one row when two compound upserts target the same logical scope", async () => {

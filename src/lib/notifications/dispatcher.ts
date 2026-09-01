@@ -25,6 +25,11 @@ function sanitizedError(error: string) {
   return error.replace(/[\r\n]+/g, " ").slice(0, 300);
 }
 
+function recipientList(value: EmailNotification["toRecipients"] | EmailNotification["ccRecipients"]): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((recipient): recipient is string => typeof recipient === "string");
+}
+
 function buildContent(row: EmailNotification) {
   const payload = row.payload as unknown as EmailPayload;
   const { appUrl } = getEmailConfig();
@@ -65,7 +70,9 @@ async function dispatchCandidates(ids: string[], now: Date): Promise<DispatchSum
     summary.claimed += 1;
     const row = await prisma.emailNotification.findUnique({ where: { id } });
     if (!row) continue;
-    if (row.toRecipients.length === 0) {
+    const toRecipients = recipientList(row.toRecipients);
+    const ccRecipients = recipientList(row.ccRecipients);
+    if (toRecipients.length === 0) {
       await prisma.emailNotification.update({
         where: { id },
         data: { status: EmailDeliveryStatus.SKIPPED, lockedAt: null, lastError: "NO_PRIMARY_RECIPIENT" },
@@ -78,8 +85,8 @@ async function dispatchCandidates(ids: string[], now: Date): Promise<DispatchSum
     try {
       const content = buildContent(row);
       result = await sendEmail({
-        to: row.toRecipients,
-        cc: row.ccRecipients,
+        to: toRecipients,
+        cc: ccRecipients,
         ...content,
       });
     } catch {

@@ -1,10 +1,8 @@
-import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "@prisma/client";
-import { Pool } from "pg";
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
-  prismaPool?: Pool;
 };
 
 function createPrismaClient() {
@@ -14,16 +12,14 @@ function createPrismaClient() {
     throw new Error("DATABASE_URL is required to access the database.");
   }
 
-  const pool = new Pool({
-    connectionString,
-    max: 1,
+  const adapter = new PrismaMariaDb(connectionString, {
+    onConnectionError: (error) => {
+      console.error("Database connection error", { code: error.code });
+    },
   });
-
-  const adapter = new PrismaPg(pool);
   const client = new PrismaClient({ adapter });
 
   globalForPrisma.prisma = client;
-  globalForPrisma.prismaPool = pool;
 
   return client;
 }

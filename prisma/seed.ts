@@ -1,9 +1,8 @@
 import "dotenv/config";
 
-import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { AccessStatus, PrismaClient, ScopeType } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { Pool } from "pg";
 
 import {
   seedActivityStatuses,
@@ -23,8 +22,7 @@ if (!connectionString) {
   throw new Error("DATABASE_URL is required to seed the database.");
 }
 
-const pool = new Pool({ connectionString, max: 1 });
-const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
+const prisma = new PrismaClient({ adapter: new PrismaMariaDb(connectionString) });
 
 async function main() {
   await prisma.$transaction([
@@ -146,4 +144,8 @@ async function main() {
 
 main()
   .then(() => prisma.$disconnect())
-  .finally(() => pool.end());
+  .catch(async (error) => {
+    console.error(error);
+    await prisma.$disconnect();
+    process.exitCode = 1;
+  });

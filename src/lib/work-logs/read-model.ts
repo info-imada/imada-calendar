@@ -49,7 +49,7 @@ export function buildWorkLogHistoryWhere(
   if (filters.userId) AND.push({ userId: filters.userId });
   if (filters.customerId) AND.push({ customerId: filters.customerId });
   const reference = filters.reference?.trim();
-  if (reference) AND.push({ machineReference: { contains: reference, mode: "insensitive" } });
+  if (reference) AND.push({ machineReference: { contains: reference } });
   if (filters.status) AND.push({ status: filters.status });
   return { AND };
 }

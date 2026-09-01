@@ -1,4 +1,6 @@
-# Dokploy PostgreSQL
+# Configuración histórica de Dokploy PostgreSQL
+
+> Documento histórico. Calendar utiliza actualmente la base MySQL/MariaDB legacy de Control Horario IMADA. No uses estas URLs para el despliegue actual.
 
 Calendar usa PostgreSQL administrado por Dokploy. La aplicación Next.js y la base de datos se comunican por la red interna de Dokploy usando el hostname del servicio PostgreSQL.
 

@@ -17,7 +17,7 @@ Esta guía define cómo analizar, modificar y entregar cambios en **Calendar**. 
 ### Lectura adicional por dominio
 
 - Autenticación, usuarios, roles o scopes: [`PERMISSIONS.md`](PERMISSIONS.md), [`API_GUIDE.md`](API_GUIDE.md) y [`DATABASE.md`](DATABASE.md).
-- Prisma, PostgreSQL, seed o migraciones: [`DATABASE.md`](DATABASE.md) y [`BUSINESS_RULES.md`](BUSINESS_RULES.md).
+- Prisma, MySQL/MariaDB, seed o migraciones: [`DATABASE.md`](DATABASE.md) y [`BUSINESS_RULES.md`](BUSINESS_RULES.md).
 - Server Actions o Route Handlers: [`API_GUIDE.md`](API_GUIDE.md) y [`PERMISSIONS.md`](PERMISSIONS.md).
 - Componentes, formularios, responsive o tema: [`UI_GUIDE.md`](UI_GUIDE.md).
 - Decisiones anteriores o posibles contradicciones: [`CHANGELOG_CONTEXT.md`](CHANGELOG_CONTEXT.md).

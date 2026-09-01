@@ -25,7 +25,7 @@ No implementes un endpoint paralelo de login ni manejes contraseñas fuera de `s
 
 ### `GET /api/health`
 
-Health/readiness público para Docker y Dokploy. Ejecuta una consulta mínima contra PostgreSQL mediante Prisma y responde:
+Health/readiness público para Docker y Dokploy. Ejecuta una consulta mínima contra MySQL mediante Prisma y responde:
 
 - `200 { "status": "ok" }` si aplicación y base están disponibles;
 - `503 { "status": "unavailable" }` ante cualquier fallo.

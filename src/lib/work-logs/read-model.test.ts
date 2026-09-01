@@ -46,7 +46,7 @@ describe("work log read model scopes", () => {
         { OR: [{ userId: "user-1" }] },
         { workDate: { gte: dateFrom, lte: dateTo } },
         { customerId: "customer-1" },
-        { machineReference: { contains: "IMADA-123", mode: "insensitive" } },
+        { machineReference: { contains: "IMADA-123" } },
         { status: "COMPLETED" },
       ],
     });

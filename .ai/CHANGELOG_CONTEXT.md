@@ -91,10 +91,17 @@ Contexto vigente: `pnpm-workspace.yaml` y `allowBuilds` forman parte del contrat
 8. ShadCN y los componentes de `src/components/product/` son la base de UI.
 9. Paleta neutral; verde de marca reservado para significado de marca/acción.
 10. No hay funcionalidad de invitación de usuarios en esta etapa; sí creación y edición administrada.
-11. Producción se despliega en Dokploy desde `master`; la base PostgreSQL se administra en Dokploy y ningún secreto entra al build de Docker.
+11. Producción se despliega desde `master`; Calendar utiliza la base MySQL/MariaDB legacy de Control Horario IMADA y ningún secreto entra al build de Docker.
 12. Desde 2026-08-12 el correo usa Resend con un outbox `EmailNotification`: un mensaje por evento, usuario afectado en `to` y supervisores autorizados por permisos/scope en `cc`.
 13. Las credenciales temporales se envían sin CC y nunca se persisten en texto plano; los demás fallos se reintentan mediante un job protegido.
 14. El detalle de usuario usa selector de sección en móvil para evitar el desborde de tabs y los formularios compartidos contienen ancho desde 320 px.
+
+## 2026-09-01 — Cambio de persistencia a la base legacy MySQL
+
+- Prisma y el runtime cambiaron de PostgreSQL a MySQL/MariaDB mediante `@prisma/adapter-mariadb`.
+- Las entidades de Calendar se aíslan con el prefijo `calendar_` para no modificar tablas Laravel existentes.
+- Las migraciones activas viven en `prisma/migrations-mysql`; las migraciones PostgreSQL históricas se conservan como referencia.
+- La verificación remota desde este equipo alcanzó el puerto 3306, pero el servidor no completó el handshake MySQL y terminó en timeout; la aplicación no debe declararse conectada hasta resolver el acceso remoto del proveedor.
 
 ## Documentos históricos relevantes
 
