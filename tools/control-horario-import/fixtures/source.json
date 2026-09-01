@@ -1,0 +1,35 @@
+{
+  "users": [
+    { "id": "legacy-user-1", "email": "tecnico@example.com", "name": "Técnico de ejemplo" }
+  ],
+  "customers": [
+    {
+      "id": "legacy-customer-1",
+      "name": "Cliente de ejemplo",
+      "locations": [
+        { "id": "legacy-location-1", "name": "Planta principal" }
+      ]
+    }
+  ],
+  "scopes": [
+    { "countryCode": "PA", "teamName": "Soporte Técnico Panamá" }
+  ],
+  "workLogs": [
+    {
+      "id": "legacy-work-log-1",
+      "userEmail": "tecnico@example.com",
+      "customerId": "legacy-customer-1",
+      "locationName": "Planta principal",
+      "reference": "IMADA-DEMO-001",
+      "description": "Registro de ejemplo para validar el importador.",
+      "status": "completed",
+      "startedAt": "2026-08-31T12:00:00.000Z",
+      "endedAt": "2026-08-31T13:00:00.000Z",
+      "durationMinutes": 60,
+      "timezone": "America/Panama",
+      "countryCode": "PA",
+      "teamName": "Soporte Técnico Panamá",
+      "attachments": []
+    }
+  ]
+}

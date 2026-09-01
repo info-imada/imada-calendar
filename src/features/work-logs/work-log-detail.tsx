@@ -1,0 +1,15 @@
+"use client";
+
+import { ExternalLinkIcon } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
+
+import { Badge } from "@/components/ui/badge";
+import type { WorkLogPresentation } from "@/features/work-logs/work-log-types";
+import { formatWorkLogDateTime } from "@/lib/work-logs/time";
+
+const labels = { IN_PROGRESS: "Jornada en curso", COMPLETION_PENDING: "Finalización marcada", COMPLETED: "Completada" } as const;
+
+export function WorkLogDetail({ workLog }: { workLog: WorkLogPresentation }) {
+  return <article className="card-enterprise min-w-0 p-4 sm:p-5"><div className="flex min-w-0 flex-wrap items-center justify-between gap-2"><div className="flex flex-wrap gap-2"><Badge>{labels[workLog.status]}</Badge>{workLog.attachments.length ? <Badge variant="secondary">{workLog.attachments.length} adjunto{workLog.attachments.length === 1 ? "" : "s"}</Badge> : null}</div>{workLog.activity ? <Link className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-border px-3 text-sm font-medium" href={`/dashboard?activity=${workLog.activity.id}`}>Abrir actividad <ExternalLinkIcon className="size-4" /></Link> : null}</div><h2 className="mt-3 font-display text-lg font-semibold">{workLog.customer?.name ?? "Trabajo sin cliente"}</h2><dl className="mt-3 grid min-w-0 gap-2 text-sm text-muted-foreground sm:grid-cols-2"><div><dt className="font-medium text-foreground">Técnico</dt><dd className="truncate">{workLog.technician.name ?? workLog.technician.email}</dd></div><div><dt className="font-medium text-foreground">Ubicación</dt><dd>{workLog.customerLocation?.name ?? workLog.location ?? "No indicada"}</dd></div><div><dt className="font-medium text-foreground">Inicio</dt><dd>{formatWorkLogDateTime(workLog.startedAt, workLog.timezone)}</dd></div><div><dt className="font-medium text-foreground">Fin / duración</dt><dd>{workLog.endedAt ? `${formatWorkLogDateTime(workLog.endedAt, workLog.timezone)} · ${workLog.durationMinutes ?? 0} min` : "En curso"}</dd></div></dl>{workLog.machineReference ? <p className="mt-3 text-sm"><span className="font-medium">Modelo o serie:</span> {workLog.machineReference}</p> : null}{workLog.description ? <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">{workLog.description}</p> : null}{workLog.attachments.length ? <div className="mt-4 grid min-w-0 gap-2 min-[420px]:grid-cols-2">{workLog.attachments.map((attachment) => <a className="group min-w-0 overflow-hidden rounded-lg border border-border bg-muted/30 p-1" href={`/api/work-logs/${workLog.id}/attachments/${attachment.id}`} key={attachment.id} rel="noreferrer" target="_blank">{attachment.mimeType.startsWith("image/") ? <Image alt={attachment.originalName} className="h-32 w-full object-contain" height={128} src={`/api/work-logs/${workLog.id}/attachments/${attachment.id}`} unoptimized width={240} /> : <span className="flex min-h-32 items-center justify-center px-2 text-center text-xs text-muted-foreground">{attachment.originalName}<br />Abrir video</span>}</a>)}</div> : null}</article>;
+}

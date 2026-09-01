@@ -1,0 +1,507 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ScopeType {
+  GLOBAL
+  COUNTRY
+  TEAM
+}
+
+enum AccessStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+}
+
+enum RecurrenceFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum ReminderChannel {
+  IN_APP
+  EMAIL
+}
+
+enum NotificationKind {
+  GENERIC
+  ACTIVITY_CREATED
+  ACTIVITY_UPDATED
+  ACTIVITY_REASSIGNED
+  ACTIVITY_STATUS_CHANGED
+  ACTIVITY_CANCELLED
+  ACTIVITY_COMMENTED
+  ACTIVITY_REMINDER
+  USER_WELCOME
+  PASSWORD_RESET
+  USER_ROLE_ASSIGNED
+  USER_ROLE_REVOKED
+  USER_ACCESS_STATUS_CHANGED
+  WORK_LOG_DRAFT
+  WORK_LOG_COMPLETED
+  WORK_LOG_ADMIN_UPDATED
+}
+
+enum EmailDeliveryStatus {
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
+  SKIPPED
+}
+
+enum OverrideEffect {
+  GRANT
+  DENY
+}
+
+enum WorkLogStatus {
+  IN_PROGRESS
+  COMPLETION_PENDING
+  COMPLETED
+}
+
+model User {
+  id                         String                   @id @default(cuid())
+  email                      String?                  @unique
+  emailVerified              DateTime?
+  name                       String?
+  image                      String?
+  accessStatus               AccessStatus             @default(PENDING)
+  timezone                   String                   @default("America/Panama") @db.VarChar(64)
+  accounts                   Account[]
+  sessions                   Session[]
+  roleAssignments            UserRoleAssignment[]
+  permissionOverrides        UserPermissionOverride[] @relation("OverrideTarget")
+  createdPermissionOverrides UserPermissionOverride[] @relation("OverrideCreator")
+  assignedActivities         Activity[]               @relation("AssignedActivities")
+  createdActivities          Activity[]               @relation("CreatedActivities")
+  comments                   ActivityComment[]
+  availability               Availability[]
+  notifications              Notification[]
+  credential                 UserCredential?
+  workLogs                   WorkLog[]
+  workLogAttachments         WorkLogAttachment[]
+  createdAt                  DateTime                 @default(now())
+  updatedAt                  DateTime                 @updatedAt
+}
+
+model UserCredential {
+  userId             String    @id
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  passwordHash       String    @db.Text
+  mustChangePassword Boolean   @default(true)
+  changedAt          DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
+
+model LoginAttempt {
+  id          String   @id @default(cuid())
+  email       String
+  attemptedAt DateTime @default(now())
+  succeeded   Boolean
+
+  @@index([email, attemptedAt])
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([sessionToken])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Country {
+  id                  String                   @id @default(cuid())
+  code                String                   @unique
+  name                String
+  teams               Team[]
+  assignments         UserRoleAssignment[]
+  activities          Activity[]
+  workLogs            WorkLog[]
+  permissionOverrides UserPermissionOverride[]
+}
+
+model Team {
+  id                  String                   @id @default(cuid())
+  name                String
+  countryId           String
+  country             Country                  @relation(fields: [countryId], references: [id])
+  assignments         UserRoleAssignment[]
+  activities          Activity[]
+  workLogs            WorkLog[]
+  permissionOverrides UserPermissionOverride[]
+
+  @@unique([countryId, name])
+}
+
+model Customer {
+  id         String     @id @default(cuid())
+  name       String
+  code       String?    @unique
+  isActive   Boolean    @default(true)
+  activities Activity[]
+  locations  CustomerLocation[]
+  workLogs   WorkLog[]
+  legacySource String?
+  legacyId     String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@index([isActive, name])
+  @@unique([legacySource, legacyId])
+}
+
+model CustomerLocation {
+  id           String   @id @default(cuid())
+  customerId   String
+  customer     Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  name         String
+  sortOrder    Int      @default(0)
+  isActive     Boolean  @default(true)
+  workLogs     WorkLog[]
+  legacySource String?
+  legacyId     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([customerId, name])
+  @@unique([legacySource, legacyId])
+  @@index([customerId, isActive, name])
+}
+
+model Role {
+  id          String               @id @default(cuid())
+  key         String               @unique
+  name        String
+  description String?
+  isSystem    Boolean              @default(false)
+  priority    Int                  @unique
+  permissions RolePermission[]
+  assignments UserRoleAssignment[]
+}
+
+model Permission {
+  id        String                   @id @default(cuid())
+  key       String                   @unique
+  label     String
+  category  String
+  roles     RolePermission[]
+  overrides UserPermissionOverride[]
+}
+
+model RolePermission {
+  id           String     @id @default(cuid())
+  roleId       String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+}
+
+model UserPermissionOverride {
+  id           String         @id @default(cuid())
+  userId       String
+  user         User           @relation("OverrideTarget", fields: [userId], references: [id], onDelete: Cascade)
+  permissionId String
+  permission   Permission     @relation(fields: [permissionId], references: [id])
+  effect       OverrideEffect
+  countryId    String?
+  country      Country?       @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  teamId       String?
+  team         Team?          @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  scopeKey     String
+  createdById  String
+  createdBy    User           @relation("OverrideCreator", fields: [createdById], references: [id])
+  createdAt    DateTime       @default(now())
+
+  @@unique([userId, permissionId, scopeKey])
+  @@index([userId, countryId, teamId])
+}
+
+model UserRoleAssignment {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roleId      String
+  role        Role      @relation(fields: [roleId], references: [id])
+  scopeType   ScopeType
+  countryId   String?
+  country     Country?  @relation(fields: [countryId], references: [id])
+  teamId      String?
+  team        Team?     @relation(fields: [teamId], references: [id])
+  scopeKey    String
+  createdAt   DateTime  @default(now())
+  createdById String
+
+  @@unique([userId, roleId, scopeKey])
+  @@index([userId, countryId, teamId])
+}
+
+model ActivityType {
+  id         String     @id @default(cuid())
+  code       String     @unique
+  name       String
+  color      String
+  sortOrder  Int        @default(0)
+  isActive   Boolean    @default(true)
+  activities Activity[]
+}
+
+model ActivityStatus {
+  id         String     @id @default(cuid())
+  code       String     @unique
+  name       String
+  color      String
+  sortOrder  Int        @default(0)
+  isActive   Boolean    @default(true)
+  activities Activity[]
+}
+
+model Priority {
+  id         String     @id @default(cuid())
+  code       String     @unique
+  name       String
+  level      Int        @unique
+  color      String
+  sortOrder  Int        @default(0)
+  isActive   Boolean    @default(true)
+  activities Activity[]
+}
+
+model Activity {
+  id           String             @id @default(cuid())
+  title        String
+  description  String?            @db.Text
+  startsAt     DateTime
+  endsAt       DateTime
+  allDay       Boolean            @default(false)
+  countryId    String
+  country      Country            @relation(fields: [countryId], references: [id])
+  teamId       String?
+  team         Team?              @relation(fields: [teamId], references: [id])
+  customerId   String?
+  customer     Customer?          @relation(fields: [customerId], references: [id])
+  typeId       String
+  type         ActivityType       @relation(fields: [typeId], references: [id])
+  statusId     String
+  status       ActivityStatus     @relation(fields: [statusId], references: [id])
+  priorityId   String
+  priority     Priority           @relation(fields: [priorityId], references: [id])
+  assignedToId String?
+  assignedTo   User?              @relation("AssignedActivities", fields: [assignedToId], references: [id])
+  createdById  String
+  createdBy    User               @relation("CreatedActivities", fields: [createdById], references: [id])
+  partNumber   String?
+  partUrl      String?            @db.VarChar(2048)
+  seriesId     String?
+  series       ActivitySeries?    @relation(fields: [seriesId], references: [id])
+  comments     ActivityComment[]
+  reminders    ActivityReminder[]
+  workLog      WorkLog?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@index([countryId, startsAt])
+  @@index([teamId, startsAt])
+  @@index([assignedToId, startsAt])
+  @@index([customerId, startsAt])
+  @@index([statusId, startsAt])
+}
+
+model WorkLog {
+  id                 String            @id @default(cuid())
+  userId             String
+  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activityId         String?           @unique
+  activity           Activity?         @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  countryId          String
+  country            Country           @relation(fields: [countryId], references: [id])
+  teamId             String?
+  team               Team?             @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  customerId         String?
+  customer           Customer?         @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  customerLocationId String?
+  customerLocation   CustomerLocation? @relation(fields: [customerLocationId], references: [id], onDelete: SetNull)
+  workDate           DateTime          @db.Date
+  timezone           String            @default("America/Panama") @db.VarChar(64)
+  startedAt          DateTime
+  endedAt            DateTime?
+  durationMinutes    Int?
+  status             WorkLogStatus     @default(IN_PROGRESS)
+  startResetUsedAt   DateTime?
+  completedAt        DateTime?
+  activeKey          String?           @unique
+  draftNotifiedAt    DateTime?
+  machineReference   String?           @db.VarChar(255)
+  location           String?           @db.VarChar(255)
+  description        String?           @db.Text
+  attachments        WorkLogAttachment[]
+  legacySource       String?
+  legacyId           String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  @@unique([legacySource, legacyId])
+  @@index([userId, workDate])
+  @@index([countryId, workDate])
+  @@index([teamId, workDate])
+  @@index([customerId, workDate])
+  @@index([status, workDate])
+  @@index([machineReference])
+}
+
+model WorkLogAttachment {
+  id           String   @id @default(cuid())
+  workLogId    String?
+  workLog      WorkLog? @relation(fields: [workLogId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  uploadUuid   String   @unique
+  objectKey    String   @unique
+  referenceUrl String?
+  originalName String
+  mimeType     String
+  sizeBytes    Int
+  etag         String?
+  legacySource String?
+  legacyId     String?
+  createdAt    DateTime @default(now())
+
+  @@unique([legacySource, legacyId])
+  @@index([userId, workLogId])
+}
+
+model ActivitySeries {
+  id             String          @id @default(cuid())
+  recurrenceRule RecurrenceRule?
+  activities     Activity[]
+}
+
+model RecurrenceRule {
+  id         String              @id @default(cuid())
+  seriesId   String              @unique
+  series     ActivitySeries      @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  frequency  RecurrenceFrequency
+  interval   Int                 @default(1)
+  daysOfWeek Int[]
+  endsAt     DateTime?
+  timezone   String
+}
+
+model ActivityComment {
+  id         String   @id @default(cuid())
+  activityId String
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  authorId   String
+  author     User     @relation(fields: [authorId], references: [id])
+  body       String   @db.Text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model ActivityReminder {
+  id          String          @id @default(cuid())
+  activityId  String
+  activity    Activity        @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  channel     ReminderChannel @default(IN_APP)
+  scheduledAt DateTime
+  sentAt      DateTime?
+
+  @@unique([activityId, channel, scheduledAt])
+  @@index([scheduledAt, sentAt])
+}
+
+model Availability {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startsAt  DateTime
+  endsAt    DateTime
+  reason    String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, startsAt])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String    @db.Text
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, readAt, createdAt])
+}
+
+model EmailNotification {
+  id             String              @id @default(cuid())
+  kind           NotificationKind
+  entityType     String
+  entityId       String
+  payload        Json
+  dedupeKey      String              @unique
+  toRecipients   String[]
+  ccRecipients   String[]
+  status         EmailDeliveryStatus @default(PENDING)
+  attemptCount   Int                 @default(0)
+  nextAttemptAt  DateTime            @default(now())
+  lockedAt       DateTime?
+  sentAt         DateTime?
+  providerId     String?
+  lastError      String?             @db.Text
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@index([status, nextAttemptAt, lockedAt])
+  @@index([entityType, entityId, createdAt])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  entityType String
+  entityId   String
+  action     String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId, createdAt])
+}
