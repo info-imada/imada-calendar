@@ -3,9 +3,6 @@ import { NextResponse } from "next/server";
 
 export default withAuth(
   function proxy(request) {
-    if (request.nextauth.token?.accessDecision === "PENDING" && request.nextUrl.pathname !== "/access-pending") {
-      return NextResponse.redirect(new URL("/access-pending", request.url));
-    }
     if (request.nextauth.token?.mustChangePassword && request.nextUrl.pathname !== "/change-password") {
       return NextResponse.redirect(new URL("/change-password", request.url));
     }

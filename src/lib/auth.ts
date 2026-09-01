@@ -33,6 +33,24 @@ function canEstablishCredentialsSession(
   return hasActiveAccess(user);
 }
 
+type AuthenticationStateUser = {
+  email: string | null;
+  accessStatus: AccessStatus;
+  credential: { mustChangePassword: boolean } | null;
+  roleAssignments: { id: string }[];
+};
+
+export function buildAuthenticationState(
+  user: AuthenticationStateUser,
+  fallbackEmail: string,
+) {
+  return {
+    accessDecision: getOAuthAccessDecision(user.accessStatus, user.roleAssignments.length > 0),
+    email: user.email ?? fallbackEmail,
+    mustChangePassword: user.credential?.mustChangePassword ?? false,
+  };
+}
+
 export function createAuthOptions(): NextAuthOptions {
   const clientId = process.env.ZOHO_CLIENT_ID;
   const clientSecret = process.env.ZOHO_CLIENT_SECRET;
@@ -148,9 +166,14 @@ export async function getAuthenticationState() {
   const session = await getServerSession(createAuthOptions());
   if (!session?.user?.email) return null;
 
-  return {
-    accessDecision: session.user.accessDecision,
-    email: session.user.email,
-    mustChangePassword: session.user.mustChangePassword,
-  };
+  const databaseUser = await findAuthorizedUser(session.user.email);
+  if (!databaseUser) {
+    return {
+      accessDecision: "DENIED" as const,
+      email: session.user.email,
+      mustChangePassword: false,
+    };
+  }
+
+  return buildAuthenticationState(databaseUser, session.user.email);
 }
